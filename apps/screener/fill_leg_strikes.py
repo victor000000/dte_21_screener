@@ -38,8 +38,6 @@ from concurrent.futures import ThreadPoolExecutor
 import duckdb
 
 ROOT = bootstrap.ROOT
-SEC = json.loads((bootstrap.DATA_ROOT / "secrets" / "alpaca.json").read_text())
-HDR = {"APCA-API-KEY-ID": SEC["key_id"], "APCA-API-SECRET-KEY": SEC["secret"]}
 SRC = "alpaca"
 from shared.rates import R_US as R
 DELTA_LO, DELTA_HI = 0.12, 0.30      # wider than the 0.16-0.22 trade band so the picker has
@@ -52,9 +50,11 @@ from shared.net import retry, throttle  # noqa: E402
 
 
 def get(url):
+    sec = json.loads((bootstrap.DATA_ROOT / "secrets" / "alpaca.json").read_text())
+    headers = {"APCA-API-KEY-ID": sec["key_id"], "APCA-API-SECRET-KEY": sec["secret"]}
     def _once():
         throttle("alpaca")
-        r = urllib.request.urlopen(urllib.request.Request(url, headers=HDR), timeout=30)
+        r = urllib.request.urlopen(urllib.request.Request(url, headers=headers), timeout=30)
         return json.loads(r.read())
     return retry(_once, what=url[:90])
 

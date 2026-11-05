@@ -43,6 +43,8 @@ jobs:
           done
           node tests/browser/risk_refresh.cjs
       - name: Offline code and unit checks
+        env:
+          CHECK_NATIVE_REQUIRED: '0'
         run: make check
 # No deployment job: no public deployment target or deployment credentials configured.
 # Runtime data audits, broker connections and native solver checks require local evidence.

@@ -235,7 +235,7 @@ PY
 
 # ── 3. the C++ solver bridge ─────────────────────────────────────────────────────────────
 note "native IV solver (QuantLib via third_party/qliv/qliv.so)"
-if [ -d ../data_providers/third_party/QuantLib ]; then
+if [ -d ../data_providers/third_party/QuantLib ] && [ "${CHECK_NATIVE_REQUIRED:-1}" != "0" ]; then
     # The sources are here, so the native path MUST be live. A missing or unloadable .so is
     # the failure this check exists for: bs.py falls back to pure Python silently, every
     # timing in the repo then describes the fallback, and the reports still claim QuantLib.
@@ -255,8 +255,8 @@ PY
 else
     # A fresh clone has no vendored C++ (third_party/ is gitignored), so this cannot be
     # judged here. Say so instead of passing quietly.
-    echo "  SKIP — no third_party/QuantLib in this checkout, so the native path cannot be"
-    echo "         verified. The Python fallback is in use. Not a pass: a runner has"
+    echo "  SKIP — native library check unavailable or explicitly excluded by CHECK_NATIVE_REQUIRED=0."
+    echo "         The Python fallback is in use. Not a native pass: a runner has"
     echo "         nothing to test, a developer off the vendored source has a real gap."
 fi
 
