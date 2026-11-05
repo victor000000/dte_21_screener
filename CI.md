@@ -9,3 +9,5 @@ Private historical reports, runtime watchlists and the native QuantLib shared li
 No CD deployment is configured. This repository does not publish a trading site, submit orders or restart local services from CI.
 
 The native check remains required by default when provider QuantLib source exists. Public CI explicitly sets `CHECK_NATIVE_REQUIRED=0` because it does not build or ship the native library; native model tests report skips.
+
+Credential persistence regression tests use synthetic secrets and fake brokers. Submission, rejection and recovery receipt writes strip credential fields and labelled secret text. Credentials are loaded from private files/environment, never from this application database.

@@ -6,6 +6,7 @@ from contextlib import closing
 import time
 from .tickets import TicketError, BrokerRejected
 from .quote_review import review_quotes
+from .receipt_privacy import clean_receipt
 
 
 class Submissions:
@@ -40,7 +41,7 @@ class Submissions:
                 uncertain = db.execute("SELECT reference FROM submissions WHERE broker=? AND state IN ('submitting','unknown')", (ticket['broker'],)).fetchone()
                 if uncertain:
                     raise TicketError('A previous submission is unresolved. Reconcile its reference with the broker before placing more orders.')
-                evidence = dict(risk_review=preview.get('risk'), ticket=ticket, quote_review=preview.get('quotes'), quote_ack=quote_ack, account=account, submission_quotes=current_quotes)
+                evidence = clean_receipt(dict(risk_review=preview.get('risk'), ticket=ticket, quote_review=preview.get('quotes'), quote_ack=quote_ack, account=account, submission_quotes=current_quotes))
                 db.execute('INSERT INTO submissions VALUES (?,?,?,?,?,?)', (reference, fingerprint, ticket['broker'], 'submitting', json.dumps(evidence), time.time()))
             try:
                 receipt = b.submit(ticket, reference)
@@ -52,7 +53,7 @@ class Submissions:
                 state = 'unknown'
                 receipt = {'message': 'Submission outcome unknown. Do not recreate this order. Refresh broker orders and reconcile the client reference.', 'reference': reference}
             with closing(sqlite3.connect(self.db_path)) as db, db:
-                receipt = {**evidence, **receipt}
+                receipt = clean_receipt({**evidence, **receipt})
                 db.execute('UPDATE submissions SET state=?,receipt=? WHERE reference=?', (state, json.dumps(receipt), reference))
             return dict(reference=reference, state=state, receipt=receipt)
 

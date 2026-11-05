@@ -14,6 +14,7 @@ from data_providers.providers.interactive_ibkr import ReadOnlyIBKR
 from .quote_review import review_quotes
 from .tickets import normalize, check_holdings, TicketError
 from .submissions import Submissions
+from .receipt_privacy import clean_receipt
 ROOT = Path(__file__).resolve().parents[2]
 class Service(Submissions):
     def __init__(self, db_path=None, brokers=None):
@@ -42,7 +43,7 @@ class Service(Submissions):
                         old = db.execute("SELECT receipt FROM submissions WHERE reference=? AND broker=? AND state IN ('unknown','submitting')",
                                          (order['reference'], name)).fetchone()
                         if old:
-                            merged = {**json.loads(old[0]), **order}
+                            merged = clean_receipt({**json.loads(old[0]), **order})
                             db.execute("UPDATE submissions SET state='submitted',receipt=? WHERE reference=? AND broker=?",
                                        (json.dumps(merged), order['reference'], name))
         return dict(account=account, positions=positions, orders=orders, fills=fills,
