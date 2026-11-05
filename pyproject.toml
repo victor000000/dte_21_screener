@@ -1,0 +1,71 @@
+[project]
+name = "dte-21-screener"
+version = "0.0.0"
+description = "21-DTE options screener, plan builder, trade log, and risk/P&L profile"
+requires-python = ">=3.11"
+# Shared provider implementation is maintained in the sibling project.
+dependencies = ["data-providers"]
+
+# ── Why this file exists ────────────────────────────────────────────────────────────────
+# Every command used to carry its own dep list, e.g.
+#   uv run --no-project --with duckdb --with ib_async --with yfinance --with futu-api \
+#          --with alpaca-py --with requests --with pytz python apps/plan/...
+# which fails at runtime when one --with is forgotten, and made `check_all.sh` report
+# "29 modules need an absent third-party dep" instead of actually importing them. The
+# groups below name the LAYERS, so the manifest states the architecture, not just a list.
+#
+# `uv run --locked` and the verification gate both use this manifest and uv.lock.
+
+[dependency-groups]
+# The data layer: DuckDB is the only hard requirement.
+data = [
+    "duckdb>=1.0",
+    "requests>=2.31",   # vendor HTTP for the sources below and the EOD clients
+]
+
+# The datasources layer, one entry per vendor module.
+sources = [
+    "ib_async",       # datasources/tws.py    -- Interactive Brokers / TWS
+    "yfinance",       # Yahoo market data
+    "curl-cffi",      # datasources/yahoo_session.py — paced yfinance-compatible HTTP
+    "futu-api",       # datasources/futu.py   (imports as `futu`)
+    "alpaca-py",      # datasources/alpaca.py (imports as `alpaca`)
+    "akshare",        # datasources/akshare.py -- China (CZCE/INE/CFFEX)
+]
+
+# Tabular work in the apps and the ingest scripts.
+analysis = [
+    # zoneinfo needs the tz database. The OS usually provides it, but a slim
+    # container may not -- and code that handles US market hours silently converts
+    # with a wrong fixed offset when it is missing (load_ibkr_activity and
+    # load_ibkr_flex both carry a +4h fallback for exactly that case). Declaring it
+    # makes DST correctness independent of the base image.
+    "tzdata",
+    "pandas",
+    "numpy",
+    "openpyxl",   # journal xlsx ingest
+    "pytz",       # ET session boundaries (the US/Eastern conversions in risk analysis)
+]
+
+# Reference implementation used ONLY to cross-check our own solver. The production
+# pricer is the vendored QuantLib behind third_party/qliv/qliv.so via ctypes; this
+# package exists so check_iv_solvers.py has an independent implementation to
+# disagree with. Do not import it from app code.
+check = ["quantlib"]
+
+# Everything, for a script that crosses layers. This is the default, so a plain
+# `uv run python <path>` behaves like the old fully-specified --with chain.
+all = [
+    { include-group = "data" },
+    { include-group = "sources" },
+    { include-group = "analysis" },
+    { include-group = "check" },
+]
+
+[tool.uv]
+# Not a package: do not try to build or install this tree, just resolve deps.
+package = false
+default-groups = ["all"]
+
+[tool.uv.sources]
+data-providers = { path = "../data_providers", editable = true }

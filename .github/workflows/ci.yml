@@ -1,0 +1,91 @@
+name: checks
+
+# Least privilege. This workflow only ever READS the repository, and without this line the
+# GITHUB_TOKEN carries the repository's default, which on an older repo is write.
+permissions:
+  contents: read
+
+# WHAT THIS CAN AND CANNOT COVER — read before trusting a green tick.
+#
+# This repo is unusual for CI in two ways, and both are deliberate:
+#
+#   * *.duckdb is gitignored. The databases ARE the product here (market_history alone is
+#     ~1.4 GB), so a runner has the code and none of the data. That rules out selfcheck's
+#     38 assertions, the IV-solver cross-check and the duplicate-key scan — the checks that
+#     need real rows. Those run via `scripts/check_all.sh --full` on the box that holds the
+#     data, which is the only place they mean anything.
+#
+#   * third_party/ is gitignored too, including the vendored QuantLib (~46 MB of C++) and
+#     the built qliv.so. So CI cannot verify the native IV solver — and must not pretend it
+#     did. check_all.sh prints SKIP for that step rather than a pass, precisely so a green
+#     CI never implies the C++ bridge was exercised. Locally, where the sources exist, the
+#     same step FAILS if bs.USING_QUANTLIB is False (the silent-fallback failure the project
+#     has shipped once by accident).
+#
+#   * the risk-profile check (scripts/risk_profile_check.py) runs here too, and prints SKIP
+#     for the same reason: it verifies the book against the report that describes it, and a
+#     runner has neither. It is NOT useless here -- it still fails loudly on a checkout that
+#     does hold a database, and `make risk-check` runs it with --live (refresh quotes, rebuild
+#     the book, then verify) on the box that has the market data. A runner can never run
+#     --live, so a green tick here says nothing about whether the profile is current. It
+#     says the CHECK still runs.
+#
+# What is left is still worth running on every push: 187 modules compile, each imports by
+# its real dotted path, 84 compatibility shims still alias rather than copy, and every shell
+# script parses. Those are the failure modes that are invisible until a script dies hours
+# into a download.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+# A superseded push should not keep a runner busy: the newest commit is the one whose
+# result somebody is actually waiting for.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    # A CEILING, because this repo's failure mode is a hang and not an error. akshare calls
+    # requests.get() with no timeout, so a rate-limiting SYN drop parks a worker on the
+    # kernel's connect timeout -- measured 2026-10-08, one chain_table call took 37.18s to
+    # fail and a download leg sat 16 minutes without completing a unit of work. Without a
+    # ceiling a hung step burns the runner's 6-hour default before anyone is told.
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      # uv, because the repo installs nothing: every entry point runs
+      # `uv run --no-project --with <deps> python ...`, and there is no requirements.txt or
+      # pyproject.toml to install from. setup-uv is what makes those invocations resolve.
+      #
+      # The cache earns its place more here than in a normal repo. This one resolves its
+      # dependencies on EVERY invocation and check_all.sh makes hundreds of them, so a cold
+      # cache is most of the job.
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: code, shell, native solver, risk profile, unit tests
+        run: bash scripts/check_all.sh
+
+  # THE SAME SUITE, SURFACED. check_all.sh already runs these -- this is not extra coverage,
+  # and it is not free (it duplicates ~1 minute of runner time on purpose). It exists because
+  # of WHERE the result lands: inside check_all a failing test is four `tail` lines under
+  # three hundred of other output, and the unit suite is the step that fails most often. As
+  # its own job it is one click to see, one click to re-run, and it goes red on its own.
+  #
+  # It calls `make test` rather than repeating the command, so CI and a developer's shell
+  # cannot drift into two different definitions of "the tests pass".
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - name: unit tests
+        run: make test

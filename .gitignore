@@ -1,0 +1,84 @@
+# ── NEVER COMMIT ─────────────────────────────────────────────────────────────
+# Live API credentials. If this line is ever removed, run
+#   git rm -r --cached secrets/ && git commit
+# and rotate the Alpaca key pair — a key in history stays in history.
+secrets/
+*.pem
+*.key
+
+# ── Databases: these are DATA, not source ────────────────────────────────────
+# market_history.duckdb 124M · trades.duckdb 8.3M · reference.duckdb 6.8M.
+# They are rebuilt from the downloaders and are far too large to version. The
+# schema that defines them lives in scripts/db_init_history.py, which IS tracked.
+*.duckdb
+*.duckdb.wal
+*.db
+
+# ── The US price warehouse: 4.0 GB, its own subproject with its own pipeline ─
+# Ignore the DATA, not the code. A blanket `market_data/` left all 22 scripts that
+# operate on those 3.2 GB of price CSVs unversioned: no history, no diff, and gone
+# entirely on a fresh clone or a `git clean -xdf`. That is how a live data-loss bug
+# (39_drop_inconsistent_rows rewriting 10,522 settled bars away) sat in a file git
+# could not even show. 776 KB of Python against 3.2 GB of CSVs -- version the code.
+market_data/data/
+market_data/quarantine/
+market_data/export/
+market_data/indices/
+market_data/sources/
+market_data/staging/
+market_data/archive/
+
+# ── Staging: transient by design, folded into market_history and then deleted ─
+/staging/
+
+# ── Runtime state ────────────────────────────────────────────────────────────
+# var/status/*.json (progress), var/ratelimit/*.gate (rate-limit slots),
+# var/cache_marketcap.json, var/raw/ (vendor dumps). All regenerable.
+var/
+.local/trading-web/
+
+# ── Logs and reports ─────────────────────────────────────────────────────────
+logs/
+
+# ── Python ───────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# ── Misc ─────────────────────────────────────────────────────────────────────
+.DS_Store
+*.swp
+*~
+
+# ── Vendored binaries ────────────────────────────────────────────────────────
+# ThetaTerminalv3.jar is a 41 MB vendor download (the ThetaData terminal), fetched
+# from the vendor, not built here. Version it by URL + version, not by blob.
+tools/*.jar
+*.jar
+
+# ── QuantLib (vendored source + out-of-source build) ─────────────────────────
+# The SOURCE is tracked (third_party/QuantLib) — it is pinned, it is what the IV
+# solver is compiled from, and reproducing it means reproducing the library.
+# The BUILD TREE and the compiled shim are not: they are derivable from the
+# source plus scripts/build_qliv.sh, and the build tree alone is ~600 MB.
+third_party/QuantLib-build/
+third_party/qliv/*.so
+# The shim's own object files, for the same reason as the tree above: build_qliv.sh
+# regenerates them from qliv.cpp / qliv_tree.cpp, and committing them means a stale .o can
+# outlive the source it came from.
+third_party/qliv/obj/
+
+# Pre-restructure DB copies (restructure_fingerprint.py / Phase 0 safety net)
+backup/
+
+# Public-source distribution: private operational artifacts stay local.
+reports/
+sites/
+.local/
+.env
+.env.*
+*.xlsx
+*.csv
+*.pdf
+home/
