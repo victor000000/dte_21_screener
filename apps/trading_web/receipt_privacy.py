@@ -12,7 +12,9 @@ def sensitive_key(key):
     return (any(part in name for part in ('password', 'secret', 'apikey'))
             or name.endswith('token')
             or name in {'authorization', 'proxyauthorization', 'cookie', 'setcookie',
-                        'headers', 'requestheaders', 'responseheaders', 'keyid', 'credentials'})
+                        'headers', 'requestheaders', 'responseheaders', 'keyid', 'credentials',
+                        'username', 'login', 'loginname', 'privatekey', 'sshprivatekey',
+                        'signingkey', 'sessionid', 'sessionkey', 'authentication'})
 
 
 def clean_receipt(value):

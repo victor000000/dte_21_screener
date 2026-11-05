@@ -13,13 +13,13 @@ class ReceiptPrivacyTests(unittest.TestCase):
 
     def test_nested_fields_and_labelled_text(self):
         original={'id':'order-1','account':'TEST_PAPER','rows':[{'APCA-API-KEY-ID':'synthetic-key',
-                  'client_secret':'synthetic-secret','qty':2}], 'request_headers':{'Cookie':'cookie-value'},
+                  'client_secret':'synthetic-secret','username':'private-login','private_key':'private-signing-material','qty':2}], 'request_headers':{'Cookie':'cookie-value'},
                   'message':'password="secret with spaces" api_key=synthetic-key&ok=1 Bearer abc123'}
         cleaned=clean_receipt(original)
         self.assertEqual(cleaned['rows'],[{'qty':2}])
         self.assertEqual(cleaned['id'],'order-1')
         self.assertNotIn('request_headers',cleaned)
-        for secret in ('synthetic-key','synthetic-secret','secret with spaces','cookie-value','abc123'):
+        for secret in ('synthetic-key','synthetic-secret','secret with spaces','cookie-value','abc123','private-login','private-signing-material'):
             self.assertNotIn(secret,json.dumps(cleaned))
         self.assertIn('client_secret',original['rows'][0])
         self.assertNotIn('json-secret',clean_receipt(json.dumps({'api_key':'json-secret'})))
