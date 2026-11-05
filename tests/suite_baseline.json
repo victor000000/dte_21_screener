@@ -1,0 +1,4 @@
+{
+ "min_tests": 487,
+ "note": "Floor for tests/test_suite_size.py. It may only rise; lowering it is a decision, which is what --update is for."
+}

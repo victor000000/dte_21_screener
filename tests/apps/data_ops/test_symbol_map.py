@@ -3,6 +3,7 @@ spellings we had to derive by hand."""
 import pathlib
 import sys
 import unittest
+import tempfile
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[4]))
 
@@ -12,6 +13,20 @@ from apps.data_ops import build_symbol_map  # noqa: E402
 
 # One cn_product_map row, as the SELECT in rows_from_universes reads it.
 MAP_ROW = ("CN:CZCE:MA", "CZCE", "MA", "MA", "ep", "YMM", ["close"])
+
+
+def setUpModule():
+    temp = tempfile.TemporaryDirectory()
+    unittest.addModuleCleanup(temp.cleanup)
+    root = pathlib.Path(temp.name)
+    (root/'plans').mkdir()
+    for name, text in {'universe_download.txt':'BRK-B\nSPY\n',
+                       'universe_futures.txt':'',
+                       'universe_futures_cn.txt':'CN:INE:SC\n'}.items():
+        (root/'plans'/name).write_text(text)
+    context = mock.patch.object(build_symbol_map, 'ROOT', root)
+    context.start()
+    unittest.addModuleCleanup(context.stop)
 
 
 class TestCnTruncationGuard(unittest.TestCase):

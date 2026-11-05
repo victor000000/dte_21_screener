@@ -24,7 +24,7 @@ class TestAtomicRebuild(unittest.TestCase):
             con.execute("INSERT INTO classifications VALUES ('previous classes')")
         self.stack = self.enterContext(contextlib.ExitStack())
         self.stack.enter_context(patch.object(bp, "DB", self.db))
-        self.stack.enter_context(patch.object(bp.bootstrap, "ROOT", self.root))
+        self.stack.enter_context(patch.object(bp.bootstrap, "DATA_ROOT", self.root))
         self.book = self.stack.enter_context(patch.object(bp, "us_book", return_value=[]))
         self.stack.enter_context(patch.object(bp.broker_marks_mod, "for_book", return_value={}))
         self.cn = self.stack.enter_context(patch.object(bp.cn_book, "store"))

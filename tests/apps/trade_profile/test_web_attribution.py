@@ -3,7 +3,7 @@ import csv
 import tempfile
 import unittest
 from pathlib import Path
-from apps.trade_profile.web_attribution import grouped, report, rows
+from apps.trade_profile.web_attribution import grouped, report, rows, DEFAULT
 
 
 class AttributionTests(unittest.TestCase):
@@ -34,6 +34,7 @@ class AttributionTests(unittest.TestCase):
             result=report(folder=folder)
             self.assertFalse(result['available']);self.assertEqual(result['days'],[])
 
+    @unittest.skipUnless((DEFAULT/"daily_attribution.csv").exists(), "Private dated report is not distributed")
     def test_saved_days_reconcile_including_account_gap(self):
         result=report()
         self.assertTrue(result['available'])

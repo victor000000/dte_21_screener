@@ -1,4 +1,5 @@
 import unittest
+from compute import bs
 from datetime import datetime, timezone
 from apps.trade_profile.cn_live_valuation import value_leg
 
@@ -13,6 +14,7 @@ class CNModelTests(unittest.TestCase):
             f[i]=v
         self.fields = {'P_OP_lc2701P87000':f}
 
+    @unittest.skipUnless(bs.USING_QUANTLIB, "Native QuantLib bridge is not distributed")
     def test_model_scaling_and_signs(self):
         u=['0']*18
         u[1]='150107';u[8]='97280';u[17]='2026-10-23'

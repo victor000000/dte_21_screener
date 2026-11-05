@@ -16,6 +16,8 @@ ROOT=pathlib.Path(__file__).resolve().parents[3]
 
 
 class UniverseNamespaceTests(unittest.TestCase):
+    @unittest.skipUnless((app.bootstrap.DATA_ROOT/"plans/screener_universe.txt").exists(),
+                         "Provider runtime watchlist is not distributed in public source")
     def test_default_watchlist_identifies_cn_venues(self):
         names=set(safe_read_ticker_file(app.bootstrap.DATA_ROOT/'plans/screener_universe.txt'))
         self.assertTrue({'CN:CZCE:MA','CN:INE:SC','CN:CFFEX:MO'}<=names)
