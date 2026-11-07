@@ -1,19 +1,33 @@
 # DTE 21 Screener
 
-Options screening, trading-journal analysis, position risk and a local trading workspace.
-The web application includes exact-contract CN risk, source freshness labels, and US CVaR scenario analysis.
-CN risk requests fresh quotes every 10 seconds while visible and auto-refresh is enabled.
+Options screening, position and trade-log analysis, management reports, and a local paper-trading workspace. Workspace version **0.5.2** comes from `apps/trading_web/__init__.py`; the root package's `0.0.0` is packaging metadata.
 
-Workspace v0.5.2 adds grouped navigation, an optional draft editor, screening-to-chain handoff and account-aware risk controls. See the [release review](docs/WORKSPACE_RELEASE_052.md).
+## Start here
 
-## Setup
+Use Linux/WSL with uv, Python 3.14 (the checked-in `.python-version`) and Node 22 for UI tests. Python metadata allows >=3.11; CI validates 3.14. Place the provider source beside this checkout. For the reproducible public baseline:
 
-Use Python 3.11+ and uv in Linux/WSL. Place the separately maintained `data_providers` project beside this checkout; `pyproject.toml` references it as an editable dependency. Run `uv sync --locked` and consult the CLI help for each application entry point. The local workspace starts with `uv run --locked python -m apps.trading_web --help`.
+```bash
+git clone https://github.com/victor000000/data_providers.git ../data_providers
+git -C ../data_providers checkout c32b218385d999fbeb4052c1d70bdb7ebae3b21f
+uv sync --locked
+uv run --locked python -m apps.trading_web.server --help
+```
 
-Provider services own credentials, market acquisition, broker connections and canonical datasets. This repository contains application source, not those credentials or data. Broker integrations require your own accounts and entitlements. Recent receipts do not certify real-time quotes. Models are estimates, not guaranteed loss caps.
+Do not clone over an existing provider checkout. Check its version and lock compatibility instead. The editable dependency is required even for tests; this is not a standalone source tree.
 
-## Publication scope
+When deliberately starting the application, run `make trading-web` and open [the loopback workspace](http://localhost:8765). Startup creates a local receipt database, and opening Positions requests a broker snapshot. Public account placeholders and absent credentials are expected to block broker operations until an operator configures an authorized paper account. See [configuration](docs/CONFIGURATION.md).
 
-This is a fresh, sanitized source snapshot, not a copy of the original Git history. Private trading logs, account exports, reports, runtime state, generated sites, credentials, binaries, archived analysis and source modules embedding personal portfolio studies are omitted. Account identifiers in remaining source/tests use placeholders. The legacy transcribed CN book is empty; use provider-delivered holdings.
+## Guides
 
-The original private working checkout passed 970 tests and code checks during preparation. This public snapshot independently passes 917 tests with 22 explicit skips for unavailable native/private integration evidence, plus offline code checks and JavaScript refresh tests. See [CI.md](CI.md) for the workflow scope and local commands. No deployment is configured. None of these checks establishes current holdings, market-data completeness or broker access.
+- [Documentation index](docs/README.md): scope, design, configuration, workflows and API.
+- [Development and CI](docs/DEVELOPMENT.md): complete offline verification.
+- [Operations and recovery](docs/OPERATIONS.md): state, diagnostics and unresolved submissions.
+- [Release design and evidence](docs/WORKSPACE_RELEASE_052.md): dated v0.5.2 review.
+
+## Ownership and publication scope
+
+Data Providers owns acquisition, source credentials, broker ingestion, canonical stores and shared pricing primitives. This repository owns analysis, screening and the paper-order interface. Use provider runtime interfaces; do not copy its stores or duplicate acquisition here.
+
+This is sanitized public source, with account placeholders. Private holdings, historical reports, generated sites, runtime state, credentials and native binaries are omitted. The maintained working project can contain additional dated analysis and unpublished report routes; those are not implicitly supported by this public release. Application execution runs natively; no application Docker rollback environment is retained. Provider deployment is independently managed.
+
+Unit tests and offline CI do not establish broker access, current market coverage, profitability, full-account risk coverage or production readiness. CVaR is a conditional model estimate; quote receipts do not prove fresh executable prices. See [data contracts and limitations](docs/DATA_CONTRACTS.md).

@@ -13,3 +13,5 @@ The native check remains required by default when provider QuantLib source exist
 Credential persistence regression tests use synthetic secrets and fake brokers. Submission, rejection and recovery receipt writes strip credential fields and labelled secret text. Credentials are loaded from private files/environment, never from this application database.
 
 Run the headless UI regressions with `for suite in tests/apps/trading_web/*.test.cjs; do node "$suite"; done`. These tests use fake APIs and do not launch a browser or connect to a broker. CI runs every suite after checking JavaScript syntax.
+
+Maintained documentation is checked offline with `uv run --locked python scripts/check_docs.py`; CI runs this after dependency installation. For canonical setup, complete test commands and limitations, see [development](docs/DEVELOPMENT.md). Dated verification records are not substitutes for the exact commit's CI outcome.

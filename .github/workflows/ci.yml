@@ -36,6 +36,8 @@ jobs:
           node-version: '22'
       - name: Install locked dependencies
         run: uv sync --locked
+      - name: Check maintained documentation
+        run: uv run --locked python scripts/check_docs.py
       - name: JavaScript syntax and refresh behavior
         run: |
           for script in apps/trading_web/static/*.js tests/browser/*.cjs tests/apps/trading_web/*.test.cjs; do
