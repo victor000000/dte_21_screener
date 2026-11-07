@@ -1,6 +1,6 @@
 # Validation and deployment
 
-GitHub Actions checks JavaScript syntax, 10-second risk polling behavior, Python imports, shell syntax and the offline unit suite. Actions and the public sibling provider source are pinned to commits. The workflow has read-only permissions, does not retain Git credentials, and uses no broker credentials, market-data downloads or running services.
+GitHub Actions checks JavaScript syntax, 10-second risk polling behavior, draft preservation, screening handoff and stale-request/account isolation, Python imports, shell syntax and the offline unit suite. Actions and the public sibling provider source are pinned to commits. The workflow has read-only permissions, does not retain Git credentials, and uses no broker credentials, market-data downloads or running services.
 
 For the equivalent local check, place this project beside the pinned `data_providers` checkout shown in `.github/workflows/ci.yml`, install Node 22 and uv, then run `uv sync --locked`, `node tests/browser/risk_refresh.cjs`, and `CHECK_NATIVE_REQUIRED=0 make check` from this project.
 
@@ -11,3 +11,5 @@ No CD deployment is configured. This repository does not publish a trading site,
 The native check remains required by default when provider QuantLib source exists. Public CI explicitly sets `CHECK_NATIVE_REQUIRED=0` because it does not build or ship the native library; native model tests report skips.
 
 Credential persistence regression tests use synthetic secrets and fake brokers. Submission, rejection and recovery receipt writes strip credential fields and labelled secret text. Credentials are loaded from private files/environment, never from this application database.
+
+Run the headless UI regressions with `for suite in tests/apps/trading_web/*.test.cjs; do node "$suite"; done`. These tests use fake APIs and do not launch a browser or connect to a broker. CI runs every suite after checking JavaScript syntax.

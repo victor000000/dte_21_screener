@@ -4,6 +4,8 @@ Options screening, trading-journal analysis, position risk and a local trading w
 The web application includes exact-contract CN risk, source freshness labels, and US CVaR scenario analysis.
 CN risk requests fresh quotes every 10 seconds while visible and auto-refresh is enabled.
 
+Workspace v0.5.2 adds grouped navigation, an optional draft editor, screening-to-chain handoff and account-aware risk controls. See the [release review](docs/WORKSPACE_RELEASE_052.md).
+
 ## Setup
 
 Use Python 3.11+ and uv in Linux/WSL. Place the separately maintained `data_providers` project beside this checkout; `pyproject.toml` references it as an editable dependency. Run `uv sync --locked` and consult the CLI help for each application entry point. The local workspace starts with `uv run --locked python -m apps.trading_web --help`.

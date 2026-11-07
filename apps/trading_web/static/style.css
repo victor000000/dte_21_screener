@@ -8,3 +8,6 @@
 :focus-visible{outline:3px solid var(--blue);outline-offset:3px}caption{text-align:left;font-weight:600;padding:12px 8px}#estimate-risk{margin:10px 0}#ticket-risk:empty{display:none}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
 
 .risk-table{min-width:850px}.risk-table td:first-child{min-width:95px}.risk-table td:nth-child(2),.risk-table td:nth-child(3){min-width:190px}
+
+/* Workspace task groups and optional draft editor. */
+nav{flex-wrap:wrap;gap:8px 26px;overflow:visible;padding-top:8px}.nav-group{display:flex;align-items:center;gap:18px;flex-wrap:wrap}.nav-label{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:650}.ticket-launch{max-width:1600px;margin:16px auto 0;padding:0 26px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}.ticket-launch button{border-color:var(--blue)}@media(max-width:800px){nav{gap:8px;padding-bottom:8px}.nav-group{width:100%;gap:8px 18px}.nav-label{width:65px}nav button{padding:8px 0}.ticket-launch{padding:0 18px}}

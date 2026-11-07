@@ -58,7 +58,7 @@ trade-log:  ## capture this session's IBKR order lifecycle
 	$(UV) python apps/trade_log/ibkr_order_collector.py
 
 .PHONY: trading-web
-trading-web:  ## local paper options workspace v0.5.1 at localhost:8765
+trading-web:  ## local paper options workspace v0.5.2 at localhost:8765
 	$(UV) python -m apps.trading_web.server --port 8765
 
 # ── restructure safety net (see scripts/restructure_*.py docstrings) ─────────────────────
