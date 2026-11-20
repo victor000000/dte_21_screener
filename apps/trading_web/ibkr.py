@@ -1,14 +1,11 @@
 """IBKR paper execution on a dedicated asyncio thread; exact account allowlist."""
 import asyncio
-import os
 import threading
 from decimal import Decimal
-from ib_async import IB, StartupFetch
 from .ibkr_execution import IBKRExecution
 from .ibkr_market import IBKRMarket
 from .ibkr_connection import IBKRConnection
 from .tickets import TicketError
-EXPECTED_ACCOUNT = 'PRIVATE_ACCOUNT'
 
 def occ(c):
     return f'{c.symbol}{c.lastTradeDateOrContractMonth[2:8]}{c.right}{int(Decimal(str(c.strike)) * 1000):08d}'
@@ -16,8 +13,8 @@ def occ(c):
 
 class IBKR(IBKRConnection, IBKRExecution, IBKRMarket):
     def __init__(self):
+        super().__init__()
         self.loop = asyncio.new_event_loop()
-        self.ib = None
         self.thread = threading.Thread(target=self._run, daemon=True)
         self.thread.start()
 
@@ -37,38 +34,38 @@ class IBKR(IBKRConnection, IBKRExecution, IBKRMarket):
         return self.call('account')
 
     async def _account(self):
-        await self._connect()
-        rows = await asyncio.wait_for(self.ib.accountSummaryAsync(EXPECTED_ACCOUNT), 8)
-        net = next((v for v in rows if v.tag == 'NetLiquidation' and v.account == EXPECTED_ACCOUNT), None)
+        expected_account = await self._connect()
+        rows = await asyncio.wait_for(self.ib.accountSummaryAsync(expected_account), 8)
+        net = next((v for v in rows if v.tag == 'NetLiquidation' and v.account == expected_account), None)
         currency = net.currency if net and net.currency != 'BASE' else None
         def value(tag):
-            return next((v.value for v in rows if v.tag == tag and v.account == EXPECTED_ACCOUNT
+            return next((v.value for v in rows if v.tag == tag and v.account == expected_account
                          and v.currency == currency), None)
-        return dict(id=EXPECTED_ACCOUNT, equity=value('NetLiquidation'), buying_power=value('BuyingPower'),
+        return dict(id=expected_account, equity=value('NetLiquidation'), buying_power=value('BuyingPower'),
                     currency=currency, source='IBKR Paper')
 
     def positions(self):
         return self.call('positions')
 
     async def _positions(self):
-        await self._connect()
+        expected_account = await self._connect()
         rows = await asyncio.wait_for(self.ib.reqPositionsAsync(), 8)
         return [dict(symbol=occ(p.contract) if p.contract.secType == 'OPT' else p.contract.localSymbol,
                      qty=p.position, average=p.avgCost / float(p.contract.multiplier or 1), mark=None, pnl=None,
                      asset_class='us_option' if p.contract.secType == 'OPT' else p.contract.secType,
                      source='IBKR holdings; mark not requested', multiplier=p.contract.multiplier,
                      currency=p.contract.currency, underlying=p.contract.symbol, con_id=p.contract.conId)
-                for p in rows if p.account == EXPECTED_ACCOUNT and p.position]
+                for p in rows if p.account == expected_account and p.position]
 
     def orders(self):
         return self.call('orders')
 
     async def _orders(self):
-        await self._connect()
+        expected_account = await self._connect()
         active = await asyncio.wait_for(self.ib.reqAllOpenOrdersAsync(), 8)
         completed = await asyncio.wait_for(self.ib.reqCompletedOrdersAsync(apiOnly=False), 8)
         trades = {str(t.order.permId or t.order.orderId): t for t in [*completed, *self.ib.trades(), *active]}
-        return [self._row(t) for t in trades.values() if t.order.account == EXPECTED_ACCOUNT]
+        return [self._row(t) for t in trades.values() if t.order.account == expected_account]
 
     def _row(self, trade):
         c, o, s = trade.contract, trade.order, trade.orderStatus
@@ -83,9 +80,9 @@ class IBKR(IBKRConnection, IBKRExecution, IBKRMarket):
         return self.call('fills')
 
     async def _fills(self):
-        await self._connect()
+        expected_account = await self._connect()
         rows = await self.ib.reqExecutionsAsync()
         return [dict(id=f.execution.execId, symbol=occ(f.contract) if f.contract.secType == 'OPT' else f.contract.localSymbol,
                      qty=f.execution.shares, side=f.execution.side, price=f.execution.price, time=f.time.isoformat())
-                for f in rows if f.execution.acctNumber == EXPECTED_ACCOUNT]
+                for f in rows if f.execution.acctNumber == expected_account]
 

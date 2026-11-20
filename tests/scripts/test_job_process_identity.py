@@ -16,24 +16,25 @@ class JobProcessIdentityTests(unittest.TestCase):
             script=root/'scripts/job.sh'
             script.write_text((ROOT.parent/'data_providers/scripts/job.sh').read_text().replace('sleep 20','sleep .2'))
             wrapper=root/'wrapper.sh';wrapper.write_text('#!/bin/bash\nexec sleep 30\n')
+            env = {**os.environ, 'DATA_PROVIDERS_HOME': str(root)}
             start=subprocess.run(['bash',str(script),'exec_case','bash',str(wrapper)],
-                                 capture_output=True,text=True)
+                                 capture_output=True, text=True, env=env)
+            self.assertEqual(start.returncode, 0, start.stdout + start.stderr)
             marker=root/'var/run/exec_case.pid';lines=marker.read_text().splitlines()
             pid=int(lines[0])
             try:
-                self.assertEqual(start.returncode,0,start.stdout+start.stderr)
                 self.assertEqual(len(lines),3)
                 self.assertIn(':',lines[2])
                 self.assertTrue(pathlib.Path(f'/proc/{pid}/cmdline').read_bytes().startswith(b'sleep\0'))
-                status=subprocess.run(['bash',str(script),'--status'],capture_output=True,text=True)
+                status=subprocess.run(['bash',str(script),'--status'],capture_output=True, text=True, env=env)
                 self.assertIn('RUNNING',status.stdout)
                 repeat=subprocess.run(['bash',str(script),'exec_case','bash',str(wrapper)],
-                                      capture_output=True,text=True)
+                                      capture_output=True, text=True, env=env)
                 self.assertIn('already running',repeat.stdout)
                 self.assertEqual(marker.read_text().splitlines()[0],str(pid))
                 # Even an exact argv match cannot override a mismatched birth identity.
                 marker.write_text(f'{pid}\nsleep 30\n{lines[2]}0\n')
-                status=subprocess.run(['bash',str(script),'--status'],capture_output=True,text=True)
+                status=subprocess.run(['bash',str(script),'--status'],capture_output=True, text=True, env=env)
                 self.assertIn('STOPPED',status.stdout)
             finally:
                 marker.write_text('\n'.join(lines)+'\n')

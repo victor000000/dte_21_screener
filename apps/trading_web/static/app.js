@@ -7,7 +7,7 @@ const time = value => value ? new Date(value).toLocaleString('en-GB',{timeZone:'
 let session, snapshot = null, page = window.WorkspaceNavigation.current(), legs = [], preview = null, busy = false, receipts = [];
 let nextBrokerRefresh=0,brokerFailures=0,ticketOpen=false;
 function setTicketOpen(open,focus=false){ticketOpen=open;const research=['cn','cn-risk','data','attribution','screening'].includes(page);$('#ticket').hidden=research||!open;$('.workspace').classList.toggle('cn-mode',research||!open);$('#toggle-ticket').setAttribute('aria-expanded',String(open&&!research));$('#toggle-ticket').textContent=open?'Collapse trade ticket':'Open trade ticket';if(focus&&open&&!research){$('#ticket').scrollIntoView({behavior:'smooth',block:'start'});$('#close-ticket').focus({preventScroll:true});}}
-const account = () => $('#broker').value === 'ibkr' ? 'PRIVATE_ACCOUNT' : 'PA3I9RDMA9KU';
+const account = () => snapshot?.account?.id || $('#broker').selectedOptions[0].textContent;
 function message(text){$('#message').hidden=!text;$('#message').textContent=text;}
 async function api(path, data){
   const response=await fetch(path, data === undefined ? {cache:'no-store'} : {method:'POST',headers:{'Content-Type':'application/json','X-Workspace-Token':session.token},body:JSON.stringify(data)});

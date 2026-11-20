@@ -1,6 +1,6 @@
 # Documentation index
 
-These guides describe implemented public source at workspace v0.5.2. Read them before the dated design records.
+These guides describe implemented public source at workspace v0.5.3. Read them before the dated design records.
 
 | Need | Canonical guide |
 | --- | --- |
@@ -10,8 +10,9 @@ These guides describe implemented public source at workspace v0.5.2. Read them b
 | Screening, risk and paper-order flows | [Workflows](WORKFLOWS.md) |
 | HTTP routes and side effects | [API](API.md) |
 | Source identity, timestamps and model limits | [Data contracts](DATA_CONTRACTS.md) |
-| Unit tests, doc checks and CI | [Development](DEVELOPMENT.md) and [CI summary](../CI.md) |
-| Troubleshooting and recovery | [Operations](OPERATIONS.md) |
+| Unit tests, doc checks and CI | [Reproduce the checks](DEVELOPMENT.md#checks) and [CI summary](../CI.md) |
+| Package and verify a source release | [Source release](DEVELOPMENT.md#source-release) |
+| Troubleshooting and recovery | [Submission recovery](OPERATIONS.md#submission-recovery) and [source rollback](OPERATIONS.md#release-and-migration) |
 | Documentation coverage and verification | [Documentation review](DOCUMENTATION_REVIEW.md) |
 
 ## Dated design and release evidence

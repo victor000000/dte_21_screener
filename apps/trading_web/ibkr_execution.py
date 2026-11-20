@@ -3,12 +3,9 @@ import asyncio
 from ib_async import Option, Contract, ComboLeg, LimitOrder
 from .tickets import TicketError
 
-EXPECTED_ACCOUNT = "PRIVATE_ACCOUNT"
-
-
 class IBKRExecution:
     async def _build(self, ticket, reference):
-        await self._connect()
+        expected_account = await self._connect()
         contracts = []
         for leg in ticket['legs']:
             c = Option(leg['underlying'], leg['expiry'].replace('-', ''), float(leg['strike']), leg['right'],
@@ -28,7 +25,7 @@ class IBKRExecution:
             action = 'BUY'
             if ticket['effect'] == 'credit':
                 price = -price
-        order = LimitOrder(action, ticket['units'], price, tif='DAY', account=EXPECTED_ACCOUNT, orderRef=reference,
+        order = LimitOrder(action, ticket['units'], price, tif='DAY', account=expected_account, orderRef=reference,
                            outsideRth=False)
         return contract, order, contracts
 
@@ -59,10 +56,10 @@ class IBKRExecution:
         return self.call('cancel', order_id)
 
     async def _cancel(self, order_id):
-        await self._connect()
+        expected_account = await self._connect()
         await self.ib.reqOpenOrdersAsync()
         trade = next((t for t in self.ib.openTrades() if str(t.order.orderId) == str(order_id)
-                      and t.order.account == EXPECTED_ACCOUNT and t.order.clientId == 71), None)
+                      and t.order.account == expected_account and t.order.clientId == 71), None)
         if trade is None:
             raise TicketError('Only open orders owned by this application client can be cancelled here.')
         self.ib.cancelOrder(trade.order)

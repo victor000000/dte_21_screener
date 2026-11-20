@@ -8,7 +8,7 @@ from .support import ticket
 class ExecutionTests(unittest.IsolatedAsyncioTestCase):
     async def test_combo_credit_routes_buy_with_negative_limit_and_exact_legs(self):
         client = IBKRExecution()
-        client._connect = AsyncMock()
+        client._connect = AsyncMock(return_value='DU1')
         class FakeIB:
             async def qualifyContractsAsync(self, c):
                 c.conId = int(c.strike)
@@ -22,6 +22,6 @@ class ExecutionTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(contract.secType, 'BAG')
         self.assertEqual(order.action, 'BUY')
         self.assertEqual(order.lmtPrice, -1.25)
-        self.assertEqual(order.account, 'PRIVATE_ACCOUNT')
+        self.assertEqual(order.account, 'DU1')
         self.assertEqual([l.action for l in contract.comboLegs], ['SELL', 'BUY'])
         self.assertEqual([l.ratio for l in contract.comboLegs], [1, 1])

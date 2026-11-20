@@ -7,15 +7,28 @@ from data_providers.runtime import data_home
 from .tickets import TicketError, BrokerRejected, alpaca_order
 
 BASE = 'https://paper-api.alpaca.markets/v2'
-EXPECTED_ACCOUNT = 'PA3I9RDMA9KU'
 TERMINAL = {'filled', 'canceled', 'expired', 'rejected', 'replaced'}
 
 
 class Alpaca:
-    def request(self, method, path, **kwargs):
-        config = json.loads((data_home() / 'secrets' / 'alpaca_paper.json').read_text())
+    def __init__(self):
+        try:
+            config = json.loads((data_home() / 'secrets' / 'alpaca_paper.json').read_text(encoding='utf-8'))
+        except (OSError, ValueError):
+            config = {}
+        self._config = config if isinstance(config, dict) else {}
+
+    def _paper_config(self):
+        config = self._config
+        fields = ('account_number', 'key_id', 'secret')
+        if any(not isinstance(config.get(field), str) or not config[field].strip() for field in fields):
+            raise TicketError('Set account_number, key_id and secret in alpaca_paper.json.')
         if config.get('environment') != 'paper' or config.get('base_url') != BASE:
             raise TicketError('Alpaca credential configuration must specify the paper endpoint.')
+        return config
+
+    def request(self, method, path, **kwargs):
+        config = self._paper_config()
         response = requests.request(method, BASE + path, headers={
             'APCA-API-KEY-ID': config['key_id'], 'APCA-API-SECRET-KEY': config['secret']},
             timeout=(5, 20), allow_redirects=False, **kwargs)
@@ -29,12 +42,13 @@ class Alpaca:
         return response.json() if response.content else {}
 
     def account(self):
+        expected_account = self._paper_config()['account_number']
         a = self.request('GET', '/account')
-        if a.get('account_number') != EXPECTED_ACCOUNT:
+        if not isinstance(a, dict) or a.get('account_number') != expected_account:
             raise TicketError('Alpaca account does not match the configured paper account.')
         if a.get('status') != 'ACTIVE' or a.get('trading_blocked') or a.get('account_blocked'):
             raise TicketError('Alpaca paper account is not enabled for trading.')
-        return dict(id=EXPECTED_ACCOUNT, equity=a.get('equity'), buying_power=a.get('buying_power'),
+        return dict(id=expected_account, equity=a.get('equity'), buying_power=a.get('buying_power'),
                     options_level=a.get('options_trading_level'), currency=a.get('currency'), source='Alpaca Paper')
 
     def positions(self):
