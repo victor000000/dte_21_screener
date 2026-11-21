@@ -108,10 +108,9 @@ The native working tree contains substantial unrelated/untracked work. To avoid
 committing it, this release was transferred to a clean clone of the established
 public repository `victor000000/dte_21_screener`, base
 `2c19ac3ff69f3098fdb9c870313c606edb6cc8d3`, on branch
-`codex/workspace-0.5.2`. Existing public account placeholders were preserved;
-private report pointers, generated reports and runtime artifacts were excluded.
-The publication source path is
-`/home/vic/.local/share/project-publications/dte_21_screener-20261105`.
+`codex/workspace-0.5.2`. That release retained the broker settings then present
+in public source and excluded private report pointers, generated reports and
+runtime artifacts.
 
 Public CI continues to pin published Data Providers
 `c32b218385d999fbeb4052c1d70bdb7ebae3b21f` (0.1.0), matching its unchanged public
